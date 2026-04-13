@@ -15,9 +15,20 @@ def budgets_view(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, le=100),
     month: str = Query(default=""),
+    category_name: str = Query(default=""),
+    min_amount: float | None = Query(default=None, ge=0),
+    max_amount: float | None = Query(default=None, ge=0),
 ):
     repo = FinanceRepository(db)
-    budgets, pagination = repo.list_budgets(user.id, month, page, limit)
+    budgets, pagination = repo.list_budgets(
+        user.id,
+        month=month,
+        category_name=category_name,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        page=page,
+        limit=limit,
+    )
     categories = repo.get_categories(user.id)
     return templates.TemplateResponse(
         request=request,
@@ -27,6 +38,9 @@ def budgets_view(
             "budgets": budgets,
             "pagination": pagination,
             "month": month,
+            "category_name": category_name,
+            "min_amount": min_amount,
+            "max_amount": max_amount,
             "categories": categories,
             "editing_budget": None,
         },

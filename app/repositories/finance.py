@@ -1,5 +1,5 @@
 from datetime import date
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, or_
 from app.models.finance import ExpenseCategory, Expense, Subscription, Budget
 from app.models.user import User
 from app.utilities.pagination import Pagination
@@ -36,33 +36,110 @@ class FinanceRepository:
         self.db.refresh(category)
         return category
 
-    def list_expenses(self, user_id: int, q: str = "", page: int = 1, limit: int = 10):
+    def list_expenses(
+        self,
+        user_id: int,
+        q: str = "",
+        category_name: str = "",
+        min_amount: float | None = None,
+        max_amount: float | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        page: int = 1,
+        limit: int = 10,
+    ):
         offset = (page - 1) * limit
         db_qry = select(Expense).where(Expense.user_id == user_id)
         if q:
-            db_qry = db_qry.where(Expense.title.ilike(f"%{q}%"))
+            db_qry = db_qry.where(
+                or_(
+                    Expense.title.ilike(f"%{q}%"),
+                    Expense.notes.ilike(f"%{q}%"),
+                    Expense.category.has(ExpenseCategory.name.ilike(f"%{q}%")),
+                )
+            )
+        if category_name:
+            db_qry = db_qry.where(Expense.category.has(ExpenseCategory.name.ilike(f"%{category_name}%")))
+        if min_amount is not None:
+            db_qry = db_qry.where(Expense.amount >= min_amount)
+        if max_amount is not None:
+            db_qry = db_qry.where(Expense.amount <= max_amount)
+        if start_date is not None:
+            db_qry = db_qry.where(Expense.expense_date >= start_date)
+        if end_date is not None:
+            db_qry = db_qry.where(Expense.expense_date <= end_date)
         count_qry = select(func.count()).select_from(db_qry.subquery())
         total_count = self.db.exec(count_qry).one()
-        items = self.db.exec(db_qry.order_by(Expense.expense_date.desc(), Expense.id.desc()).offset(offset).limit(limit)).all()
+        items = self.db.exec(
+            db_qry.order_by(Expense.expense_date.desc(), Expense.id.desc()).offset(offset).limit(limit)
+        ).all()
         pagination = Pagination(total_count=total_count, current_page=page, limit=limit)
         return items, pagination
 
-    def list_subscriptions(self, user_id: int, q: str = "", page: int = 1, limit: int = 10):
+    def list_subscriptions(
+        self,
+        user_id: int,
+        q: str = "",
+        category_name: str = "",
+        min_amount: float | None = None,
+        max_amount: float | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        active: str = "",
+        page: int = 1,
+        limit: int = 10,
+    ):
         offset = (page - 1) * limit
         db_qry = select(Subscription).where(Subscription.user_id == user_id)
         if q:
-            db_qry = db_qry.where(Subscription.name.ilike(f"%{q}%"))
+            db_qry = db_qry.where(
+                or_(
+                    Subscription.name.ilike(f"%{q}%"),
+                    Subscription.category.has(ExpenseCategory.name.ilike(f"%{q}%")),
+                )
+            )
+        if category_name:
+            db_qry = db_qry.where(Subscription.category.has(ExpenseCategory.name.ilike(f"%{category_name}%")))
+        if min_amount is not None:
+            db_qry = db_qry.where(Subscription.amount >= min_amount)
+        if max_amount is not None:
+            db_qry = db_qry.where(Subscription.amount <= max_amount)
+        if start_date is not None:
+            db_qry = db_qry.where(Subscription.next_payment_date >= start_date)
+        if end_date is not None:
+            db_qry = db_qry.where(Subscription.next_payment_date <= end_date)
+        if active == "active":
+            db_qry = db_qry.where(Subscription.active == True)
+        elif active == "inactive":
+            db_qry = db_qry.where(Subscription.active == False)
         count_qry = select(func.count()).select_from(db_qry.subquery())
         total_count = self.db.exec(count_qry).one()
-        items = self.db.exec(db_qry.order_by(Subscription.next_payment_date.asc(), Subscription.id.desc()).offset(offset).limit(limit)).all()
+        items = self.db.exec(
+            db_qry.order_by(Subscription.next_payment_date.asc(), Subscription.id.desc()).offset(offset).limit(limit)
+        ).all()
         pagination = Pagination(total_count=total_count, current_page=page, limit=limit)
         return items, pagination
 
-    def list_budgets(self, user_id: int, month: str = "", page: int = 1, limit: int = 10):
+    def list_budgets(
+        self,
+        user_id: int,
+        month: str = "",
+        category_name: str = "",
+        min_amount: float | None = None,
+        max_amount: float | None = None,
+        page: int = 1,
+        limit: int = 10,
+    ):
         offset = (page - 1) * limit
         db_qry = select(Budget).where(Budget.user_id == user_id)
         if month:
             db_qry = db_qry.where(Budget.month == month)
+        if category_name:
+            db_qry = db_qry.where(Budget.category.has(ExpenseCategory.name.ilike(f"%{category_name}%")))
+        if min_amount is not None:
+            db_qry = db_qry.where(Budget.limit_amount >= min_amount)
+        if max_amount is not None:
+            db_qry = db_qry.where(Budget.limit_amount <= max_amount)
         count_qry = select(func.count()).select_from(db_qry.subquery())
         total_count = self.db.exec(count_qry).one()
         items = self.db.exec(db_qry.order_by(Budget.month.desc(), Budget.id.desc()).offset(offset).limit(limit)).all()

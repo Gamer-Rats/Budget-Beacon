@@ -16,9 +16,24 @@ def expenses_view(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, le=100),
     q: str = Query(default=""),
+    category_name: str = Query(default=""),
+    min_amount: float | None = Query(default=None, ge=0),
+    max_amount: float | None = Query(default=None, ge=0),
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
 ):
     repo = FinanceRepository(db)
-    expenses, pagination = repo.list_expenses(user.id, q, page, limit)
+    expenses, pagination = repo.list_expenses(
+        user.id,
+        q=q,
+        category_name=category_name,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        start_date=start_date,
+        end_date=end_date,
+        page=page,
+        limit=limit,
+    )
     categories = repo.get_categories(user.id)
     return templates.TemplateResponse(
         request=request,
@@ -28,6 +43,11 @@ def expenses_view(
             "expenses": expenses,
             "pagination": pagination,
             "q": q,
+            "category_name": category_name,
+            "min_amount": min_amount,
+            "max_amount": max_amount,
+            "start_date": start_date,
+            "end_date": end_date,
             "categories": categories,
             "editing_expense": None,
         },

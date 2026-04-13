@@ -2,7 +2,7 @@
 
 {% block title %}Budgets{% endblock %}
 
-{% set pager_base = '/budgets?limit=' ~ pagination.limit ~ '&month=' ~ month ~ '&' %}
+{% set pager_base = '/budgets?limit=' ~ pagination.limit ~ '&month=' ~ month ~ '&category_name=' ~ category_name ~ '&min_amount=' ~ (min_amount if min_amount is not none else '') ~ '&max_amount=' ~ (max_amount if max_amount is not none else '') ~ '&' %}
 
 {% block subpage_content %}
 <div class="container-fluid">
@@ -45,12 +45,29 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
                         <h5 class="card-title mb-0">Budgets</h5>
-                        <form class="d-flex gap-2" method="GET" action="/budgets">
+                    </div>
+                    <form class="row g-2 align-items-end mb-4" method="GET" action="/budgets">
+                        <div class="col-sm-6 col-md-3">
+                            <label class="form-label mb-1">Month</label>
                             <input class="form-control" type="month" name="month" value="{{ month }}">
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <label class="form-label mb-1">Category</label>
+                            <input class="form-control" list="budget-categories" name="category_name" value="{{ category_name }}" placeholder="Category">
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <label class="form-label mb-1">Min limit</label>
+                            <input class="form-control" type="number" min="0" step="0.01" name="min_amount" value="{{ min_amount if min_amount is not none else '' }}">
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <label class="form-label mb-1">Max limit</label>
+                            <input class="form-control" type="number" min="0" step="0.01" name="max_amount" value="{{ max_amount if max_amount is not none else '' }}">
+                        </div>
+                        <div class="col-auto">
                             <input type="hidden" name="limit" value="{{ pagination.limit }}">
                             <button class="btn btn-outline-primary" type="submit">Filter</button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                     <div class="table-responsive">
                         <table class="table table-striped align-middle">
                             <thead>
