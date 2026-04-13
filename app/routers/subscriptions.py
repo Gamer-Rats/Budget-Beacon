@@ -8,6 +8,27 @@ from app.utilities.flash import flash
 from . import router, templates
 
 
+def _parse_optional_float(value: str | None) -> float | None:
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        parsed = float(value)
+    except ValueError:
+        return None
+    return parsed if parsed >= 0 else None
+
+
+def _parse_optional_date(value: str | None) -> date | None:
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 @router.get("/subscriptions", response_class=HTMLResponse)
 def subscriptions_view(
     request: Request,
@@ -17,21 +38,26 @@ def subscriptions_view(
     limit: int = Query(default=10, le=100),
     q: str = Query(default=""),
     category_name: str = Query(default=""),
-    min_amount: float | None = Query(default=None, ge=0),
-    max_amount: float | None = Query(default=None, ge=0),
-    start_date: date | None = Query(default=None),
-    end_date: date | None = Query(default=None),
+    min_amount: str = Query(default=""),
+    max_amount: str = Query(default=""),
+    start_date: str = Query(default=""),
+    end_date: str = Query(default=""),
     active: str = Query(default=""),
 ):
+    min_amount_value = _parse_optional_float(min_amount)
+    max_amount_value = _parse_optional_float(max_amount)
+    start_date_value = _parse_optional_date(start_date)
+    end_date_value = _parse_optional_date(end_date)
+
     repo = FinanceRepository(db)
     subscriptions, pagination = repo.list_subscriptions(
         user.id,
         q=q,
         category_name=category_name,
-        min_amount=min_amount,
-        max_amount=max_amount,
-        start_date=start_date,
-        end_date=end_date,
+        min_amount=min_amount_value,
+        max_amount=max_amount_value,
+        start_date=start_date_value,
+        end_date=end_date_value,
         active=active,
         page=page,
         limit=limit,
@@ -49,10 +75,10 @@ def subscriptions_view(
             "pagination": pagination,
             "q": q,
             "category_name": category_name,
-            "min_amount": min_amount,
-            "max_amount": max_amount,
-            "start_date": start_date,
-            "end_date": end_date,
+            "min_amount": min_amount_value,
+            "max_amount": max_amount_value,
+            "start_date": start_date_value,
+            "end_date": end_date_value,
             "active": active,
             "categories": categories,
             "monthly_total": monthly_total,

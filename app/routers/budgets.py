@@ -7,6 +7,17 @@ from app.utilities.flash import flash
 from . import router, templates
 
 
+def _parse_optional_float(value: str | None) -> float | None:
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        parsed = float(value)
+    except ValueError:
+        return None
+    return parsed if parsed >= 0 else None
+
+
 @router.get("/budgets", response_class=HTMLResponse)
 def budgets_view(
     request: Request,
@@ -16,16 +27,19 @@ def budgets_view(
     limit: int = Query(default=10, le=100),
     month: str = Query(default=""),
     category_name: str = Query(default=""),
-    min_amount: float | None = Query(default=None, ge=0),
-    max_amount: float | None = Query(default=None, ge=0),
+    min_amount: str = Query(default=""),
+    max_amount: str = Query(default=""),
 ):
+    min_amount_value = _parse_optional_float(min_amount)
+    max_amount_value = _parse_optional_float(max_amount)
+
     repo = FinanceRepository(db)
     budgets, pagination = repo.list_budgets(
         user.id,
         month=month,
         category_name=category_name,
-        min_amount=min_amount,
-        max_amount=max_amount,
+        min_amount=min_amount_value,
+        max_amount=max_amount_value,
         page=page,
         limit=limit,
     )
@@ -39,8 +53,8 @@ def budgets_view(
             "pagination": pagination,
             "month": month,
             "category_name": category_name,
-            "min_amount": min_amount,
-            "max_amount": max_amount,
+            "min_amount": min_amount_value,
+            "max_amount": max_amount_value,
             "categories": categories,
             "editing_budget": None,
         },

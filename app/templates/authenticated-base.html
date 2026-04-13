@@ -7,18 +7,28 @@
         background-color: transparent;
     }
 
+    body.sidebar-mobile-open {
+        overflow: hidden;
+    }
+
     #wrapper {
         display: flex;
         min-height: 100vh;
+        align-items: stretch;
     }
 
     #sidebar {
         min-width: 250px;
         max-width: 250px;
         min-height: 100vh;
+        height: 100vh;
         transition: all 0.3s;
         background: var(--color-sidebar);
         color: #fff;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
+        flex-shrink: 0;
     }
 
     #sidebar.collapsed {
@@ -58,6 +68,52 @@
     .navbar {
         border-bottom: 1px solid var(--color-border);
         background-color: rgba(255, 255, 255, 0.95);
+    }
+
+    #sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        z-index: 1030;
+    }
+
+    #sidebar-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    @media (max-width: 991.98px) {
+        #wrapper {
+            display: block;
+        }
+
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1040;
+            transform: translateX(0);
+            margin-left: 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        #sidebar.collapsed {
+            margin-left: 0;
+            transform: translateX(-100%);
+        }
+    }
+
+    @media (min-width: 992px) {
+        #sidebar {
+            transform: none;
+        }
+
+        #sidebar.collapsed {
+            margin-left: -250px;
+        }
     }
 
     #chatbot-toggle {
@@ -158,7 +214,7 @@
 
 {% block content %}
 <div id="wrapper">
-    <nav id="sidebar" class="p-3 d-flex flex-column vh-100">
+    <nav id="sidebar" class="p-3 d-flex flex-column collapsed">
         <h4 class="text-white mb-4 text-center py-4">Finance Tracker</h4>
 
         <ul class="nav nav-pills flex-column gap-2 flex-grow-1">
@@ -223,12 +279,55 @@
         {% block subpage_content %}{% endblock %}
     </div>
 </div>
+<div id="sidebar-backdrop" aria-hidden="true"></div>
 
 <script>
-    document.getElementById("menu-toggle").addEventListener("click", function () {
-        document.getElementById("sidebar").classList.toggle("collapsed");
+    const sidebar = document.getElementById("sidebar");
+    const menuToggle = document.getElementById("menu-toggle");
+    const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+
+    function isMobileView() {
+        return window.innerWidth < 992;
+    }
+
+    function syncSidebarState() {
+        const isOpen = !sidebar.classList.contains("collapsed");
+        if (isMobileView()) {
+            sidebarBackdrop.classList.toggle("show", isOpen);
+            document.body.classList.toggle("sidebar-mobile-open", isOpen);
+        } else {
+            sidebarBackdrop.classList.remove("show");
+            document.body.classList.remove("sidebar-mobile-open");
+        }
+    }
+
+    function closeSidebar() {
+        sidebar.classList.add("collapsed");
+        syncSidebarState();
+    }
+
+    menuToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        sidebar.classList.toggle("collapsed");
+        syncSidebarState();
     });
+
+    sidebarBackdrop.addEventListener("click", closeSidebar);
+    sidebar.querySelectorAll("a.nav-link").forEach(function (link) {
+        link.addEventListener("click", function () {
+            if (isMobileView()) {
+                closeSidebar();
+            }
+        });
+    });
+
+    window.addEventListener("resize", function () {
+        syncSidebarState();
+    });
+
+    syncSidebarState();
 </script>
+
 
 
 <button id="chatbot-toggle" class="btn btn-primary" type="button" title="Open AI assistant">
