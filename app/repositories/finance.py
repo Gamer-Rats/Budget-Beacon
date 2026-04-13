@@ -146,6 +146,23 @@ class FinanceRepository:
         pagination = Pagination(total_count=total_count, current_page=page, limit=limit)
         return items, pagination
 
+    def get_budget_spent(self, user_id: int, month: str, category_id: int | None = None) -> float:
+        year, month_num = map(int, month.split("-"))
+        start_date = date(year, month_num, 1)
+        if month_num == 12:
+            end_date = date(year + 1, 1, 1)
+        else:
+            end_date = date(year, month_num + 1, 1)
+        db_qry = select(func.sum(Expense.amount)).where(
+            Expense.user_id == user_id,
+            Expense.expense_date >= start_date,
+            Expense.expense_date < end_date,
+        )
+        if category_id is not None:
+            db_qry = db_qry.where(Expense.category_id == category_id)
+        total = self.db.exec(db_qry).one()
+        return float(total or 0.0)
+
     def get_expense(self, expense_id: int, user_id: int):
         return self.db.exec(select(Expense).where(Expense.id == expense_id, Expense.user_id == user_id)).one_or_none()
 

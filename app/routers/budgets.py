@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Request, Query, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.dependencies.auth import AuthDep
@@ -7,7 +9,7 @@ from app.utilities.flash import flash
 from . import router, templates
 
 
-def _parse_optional_float(value: str | None) -> float | None:
+def _parse_optional_float(value: Optional[str]) -> Optional[float]:
     value = (value or "").strip()
     if not value:
         return None
@@ -43,6 +45,33 @@ def budgets_view(
         page=page,
         limit=limit,
     )
+    budget_meta = {}
+    budget_alerts = []
+    for budget in budgets:
+        spent = repo.get_budget_spent(user.id, budget.month, budget.category_id)
+        percent = spent / budget.limit_amount if budget.limit_amount else 0
+        status = "normal"
+        if percent > 1:
+            status = "alert"
+            budget_alerts.append(
+                {
+                    "message": f"You exceeded your {budget.category.name if budget.category else 'Uncategorized'} budget!",
+                    "level": "danger",
+                }
+            )
+        elif percent > 0.8:
+            status = "warning"
+            budget_alerts.append(
+                {
+                    "message": f"You are nearing your {budget.category.name if budget.category else 'Uncategorized'} budget.",
+                    "level": "warning",
+                }
+            )
+        budget_meta[budget.id] = {
+            "spent": spent,
+            "percent": percent,
+            "status": status,
+        }
     categories = repo.get_categories(user.id)
     return templates.TemplateResponse(
         request=request,
@@ -57,6 +86,8 @@ def budgets_view(
             "max_amount": max_amount_value,
             "categories": categories,
             "editing_budget": None,
+            "budget_meta": budget_meta,
+            "budget_alerts": budget_alerts,
         },
     )
 
@@ -92,6 +123,33 @@ def edit_budget_view(
         flash(request, "Budget not found", "danger")
         return RedirectResponse(url=request.url_for("budgets_view"), status_code=status.HTTP_303_SEE_OTHER)
     budgets, pagination = repo.list_budgets(user.id, month, page, limit)
+    budget_meta = {}
+    budget_alerts = []
+    for item in budgets:
+        spent = repo.get_budget_spent(user.id, item.month, item.category_id)
+        percent = spent / item.limit_amount if item.limit_amount else 0
+        status = "normal"
+        if percent > 1:
+            status = "alert"
+            budget_alerts.append(
+                {
+                    "message": f"You exceeded your {item.category.name if item.category else 'Uncategorized'} budget!",
+                    "level": "danger",
+                }
+            )
+        elif percent > 0.8:
+            status = "warning"
+            budget_alerts.append(
+                {
+                    "message": f"You are nearing your {item.category.name if item.category else 'Uncategorized'} budget.",
+                    "level": "warning",
+                }
+            )
+        budget_meta[item.id] = {
+            "spent": spent,
+            "percent": percent,
+            "status": status,
+        }
     categories = repo.get_categories(user.id)
     return templates.TemplateResponse(
         request=request,
@@ -103,6 +161,8 @@ def edit_budget_view(
             "month": month,
             "categories": categories,
             "editing_budget": budget,
+            "budget_meta": budget_meta,
+            "budget_alerts": budget_alerts,
         },
     )
 
