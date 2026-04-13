@@ -310,6 +310,7 @@
         event.stopPropagation();
         sidebar.classList.toggle("collapsed");
         syncSidebarState();
+        menuToggle.blur();
     });
 
     sidebarBackdrop.addEventListener("click", closeSidebar);
