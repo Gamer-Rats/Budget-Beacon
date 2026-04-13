@@ -1,12 +1,14 @@
 {% extends "authenticated-base.html" %}
 
-{% block external_js %}
-<script src="{{ url_for('static', path='js/app.js')}}"></script>
-{% endblock %}
-
+{% block title %}Admin{% endblock %}
 
 {% block subpage_content %}
-
-   I am the admin page
-
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Admin View</h5>
+            <p class="mb-0">This starter includes an admin route. You can extend it later for user monitoring or system stats.</p>
+        </div>
+    </div>
+</div>
 {% endblock %}

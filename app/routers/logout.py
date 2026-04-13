@@ -1,20 +1,17 @@
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi import Request, status, Form
-from app.dependencies import SessionDep
-from . import router, templates
-from app.services.auth_service import AuthService
-from app.repositories.user import UserRepository
-from app.utilities.flash import flash
+from fastapi.responses import RedirectResponse
+from fastapi import Request, status
+from . import router
 from app.config import get_settings
 
-# View route responsible for UI
+
 @router.get("/logout")
 async def logout(request: Request):
+    secure_cookie = get_settings().env.lower() == "production"
     response = RedirectResponse(url=request.url_for("login_view"), status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(
-        key="access_token", 
+        key="access_token",
         httponly=True,
-        samesite="none",
-        secure=True
+        samesite="lax" if not secure_cookie else "none",
+        secure=secure_cookie,
     )
     return response

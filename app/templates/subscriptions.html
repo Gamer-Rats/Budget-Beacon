@@ -1,0 +1,139 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}Subscriptions{% endblock %}
+
+{% set pager_base = '/subscriptions?limit=' ~ pagination.limit ~ '&q=' ~ q ~ '&' %}
+
+{% block subpage_content %}
+<div class="container-fluid">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ 'Edit Subscription' if editing_subscription else 'Add Subscription' }}</h5>
+                    <form method="POST" action="{{ '/subscriptions/' ~ editing_subscription.id ~ '/edit' if editing_subscription else '/subscriptions' }}">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" name="name" type="text" value="{{ editing_subscription.name if editing_subscription else '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <input class="form-control" name="amount" type="number" min="0" step="0.01" value="{{ editing_subscription.amount if editing_subscription else '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Billing Cycle</label>
+                            <select class="form-select" name="billing_cycle">
+                                <option value="monthly" {{ 'selected' if editing_subscription and editing_subscription.billing_cycle == 'monthly' else '' }}>Monthly</option>
+                                <option value="yearly" {{ 'selected' if editing_subscription and editing_subscription.billing_cycle == 'yearly' else '' }}>Yearly</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Next Payment Date</label>
+                            <input class="form-control" name="next_payment_date" type="date" value="{{ editing_subscription.next_payment_date if editing_subscription else '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <input class="form-control" list="subscription-categories" name="category_name" value="{{ editing_subscription.category.name if editing_subscription and editing_subscription.category else '' }}">
+                            <datalist id="subscription-categories">
+                                {% for category in categories %}
+                                <option value="{{ category.name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="active">
+                                <option value="true" {{ 'selected' if not editing_subscription or editing_subscription.active else '' }}>Active</option>
+                                <option value="false" {{ 'selected' if editing_subscription and not editing_subscription.active else '' }}>Inactive</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" type="submit">{{ 'Update' if editing_subscription else 'Save' }}</button>
+                            {% if editing_subscription %}
+                            <a class="btn btn-outline-secondary" href="/subscriptions">Cancel</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+                        <h5 class="card-title mb-0">Subscriptions</h5>
+                        <form class="d-flex gap-2" method="GET" action="/subscriptions">
+                            <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Search subscriptions">
+                            <input type="hidden" name="limit" value="{{ pagination.limit }}">
+                            <button class="btn btn-outline-primary" type="submit">Search</button>
+                        </form>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Cycle</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in subscriptions %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category.name if item.category else 'Uncategorized' }}</td>
+                                    <td>${{ '%.2f'|format(item.amount) }}</td>
+                                    <td>{{ item.billing_cycle }}</td>
+                                    <td>{{ 'Active' if item.active else 'Inactive' }}</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-primary" href="/subscriptions/{{ item.id }}/edit">Edit</a>
+                                        <a class="btn btn-sm btn-outline-danger" href="/subscriptions/{{ item.id }}/delete">Delete</a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No subscriptions found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+<div class="row mt-3" style="display: flex; align-items: center; justify-content: center; position: relative;">
+    <ul class="pagination" style="margin: 0;">
+        {% if pagination.has_prev %}
+        <li class="page-item"><a class="page-link" href="{{ pager_base }}page={{ pagination.prev_num }}">Previous</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+                {% if pagination.page == page_num %}
+                <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="{{ pager_base }}page={{ page_num }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+        <li class="page-item"><a class="page-link" href="{{ pager_base }}page={{ pagination.next_num }}">Next</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+    </ul>
+</div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

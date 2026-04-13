@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi import status
+from fastapi import Request
+from fastapi.responses import HTMLResponse
 from app.dependencies.session import SessionDep
-from app.dependencies.auth import AuthDep, IsUserLoggedIn, get_current_user, is_admin
+from app.dependencies.auth import AuthDep
+from app.repositories.finance import FinanceRepository
 from . import router, templates
 
 
@@ -10,12 +10,15 @@ from . import router, templates
 async def user_home_view(
     request: Request,
     user: AuthDep,
-    db:SessionDep
+    db: SessionDep,
 ):
+    finance_repo = FinanceRepository(db)
+    summary = finance_repo.get_dashboard_summary(user)
     return templates.TemplateResponse(
-        request=request, 
-        name="app.html",
+        request=request,
+        name="dashboard.html",
         context={
-            "user": user
+            "user": user,
+            "summary": summary,
         }
     )

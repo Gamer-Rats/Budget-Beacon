@@ -1,0 +1,75 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block subpage_content %}
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+
+<div class="container-fluid">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Expense Breakdown by Category</h5>
+                    <div id="expense-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Active Subscription Breakdown</h5>
+                    <div id="subscription-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script>
+function convertData(data){
+    let res = [];
+    for(let key in data){
+        res.push({ name: key, y: data[key] });
+    }
+    return res;
+}
+
+function drawPieChart(containerId, title, data){
+    Highcharts.chart(containerId, {
+        chart: { type: 'pie' },
+        title: { text: title },
+        tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>' },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: { enabled: false },
+                showInLegend: true,
+            }
+        },
+        series: [{
+            name: 'Share',
+            colorByPoint: true,
+            data: data,
+        }]
+    });
+}
+
+async function loadCharts(){
+    let expenseRes = await fetch('/api/expense-stats');
+    let expenseData = convertData(await expenseRes.json());
+    drawPieChart('expense-chart', 'Expense Share by Category', expenseData);
+
+    let subscriptionRes = await fetch('/api/subscription-stats');
+    let subscriptionData = convertData(await subscriptionRes.json());
+    drawPieChart('subscription-chart', 'Subscription Share', subscriptionData);
+}
+
+loadCharts();
+</script>
+{% endblock %}

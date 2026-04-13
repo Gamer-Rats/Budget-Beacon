@@ -1,0 +1,104 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid">
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Monthly Income</p>
+                    <h3>${{ '%.2f'|format(user.monthly_income) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">One-Time Expenses</p>
+                    <h3>${{ '%.2f'|format(summary.monthly_expense_total) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Subscriptions</p>
+                    <h3>${{ '%.2f'|format(summary.monthly_subscription_total) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Burn Rate</p>
+                    <h3>{{ '%.1f'|format(summary.burn_rate * 100) }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">This Month</h5>
+                    <p class="mb-2"><strong>Month:</strong> {{ summary.current_month }}</p>
+                    <p class="mb-2"><strong>Total Spending:</strong> ${{ '%.2f'|format(summary.monthly_total_spending) }}</p>
+                    <p class="mb-0"><strong>Total Budget:</strong> ${{ '%.2f'|format(summary.monthly_budget_total) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a class="btn btn-primary" href="/expenses">Manage Expenses</a>
+                        <a class="btn btn-outline-primary" href="/subscriptions">Manage Subscriptions</a>
+                        <a class="btn btn-outline-primary" href="/budgets">Manage Budgets</a>
+                        <a class="btn btn-outline-dark" href="/reports">View Reports</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Expenses</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in summary.recent_expenses %}
+                                <tr>
+                                    <td>{{ item.title }}</td>
+                                    <td>{{ item.category.name if item.category else 'Uncategorized' }}</td>
+                                    <td>${{ '%.2f'|format(item.amount) }}</td>
+                                    <td>{{ item.expense_date }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No expenses added yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
