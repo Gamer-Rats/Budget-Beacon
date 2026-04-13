@@ -328,3 +328,26 @@ class FinanceRepository:
         for item in subscriptions:
             result[item.name] = item.amount
         return result
+
+    def get_subscription_impact(subscriptions):
+        monthly_total = 0
+        yearly_total = 0
+        subscription_breakdown = []
+
+        for subscription in subscriptions:
+            amount = float(subscription.amount)
+            monthly_total += amount
+            yearly_cost = amount * 12
+            yearly_total += yearly_cost
+
+            subscription_breakdown.append({
+            "name": subscription.name,
+            "monthly_cost": amount,
+            "yearly_cost": yearly_cost
+        })
+
+        return {
+            "monthly_total": monthly_total,
+            "yearly_total": yearly_total,
+            "subscription_breakdown": subscription_breakdown
+        }

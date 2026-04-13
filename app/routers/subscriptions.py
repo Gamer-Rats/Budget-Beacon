@@ -37,6 +37,9 @@ def subscriptions_view(
         limit=limit,
     )
     categories = repo.get_categories(user.id)
+    monthly_total = sum(float(subscription.amount) for subscription in subscriptions)
+    yearly_total = monthly_total * 12
+
     return templates.TemplateResponse(
         request=request,
         name="subscriptions.html",
@@ -52,6 +55,8 @@ def subscriptions_view(
             "end_date": end_date,
             "active": active,
             "categories": categories,
+            "monthly_total": monthly_total,
+            "yearly_total": yearly_total,
             "editing_subscription": None,
         },
     )
