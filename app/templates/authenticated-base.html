@@ -248,6 +248,12 @@
                     Reports
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center {{ 'active' if request.path.startswith('/monthly-summary') }}" href="/monthly-summary">
+                    <span class="material-symbols-outlined me-2">calendar_month</span>
+        Monthly Summary
+                </a>
+            </li>
             <li class="nav-item mt-auto">
                 <a class="nav-link d-flex align-items-center text-warning" href="/logout">
                     <span class="material-symbols-outlined me-2">logout</span>

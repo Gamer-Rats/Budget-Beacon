@@ -27,4 +27,5 @@ from . import (
     budgets,
     reports,
     chatbot,
+    monthly_summary
 )

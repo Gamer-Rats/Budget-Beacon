@@ -1,4 +1,5 @@
 from datetime import date
+from app.schemas import user
 from sqlmodel import Session, select, func, or_
 from app.models.finance import ExpenseCategory, Expense, Subscription, Budget
 from app.models.user import User
@@ -346,7 +347,7 @@ class FinanceRepository:
             result[item.name] = item.amount
         return result
 
-    def get_subscription_impact(subscriptions):
+    def get_subscription_impact(self , subscriptions):
         monthly_total = 0
         yearly_total = 0
         subscription_breakdown = []
@@ -367,4 +368,57 @@ class FinanceRepository:
             "monthly_total": monthly_total,
             "yearly_total": yearly_total,
             "subscription_breakdown": subscription_breakdown
+        }
+    
+
+    def get_monthly_summary(self, user: User):
+        today = date.today()
+        month_label = today.strftime("%B %Y")
+        month_key = today.strftime("%Y-%m")
+
+        monthly_expenses = self.db.exec(
+            select(Expense).where(
+            Expense.user_id == user.id,
+            Expense.expense_date >= date(today.year, today.month, 1),
+        )
+        ).all()
+
+        total_expenses = sum(item.amount for item in monthly_expenses)
+
+        active_subscriptions = self.db.exec(
+            select(Subscription).where(
+            Subscription.user_id == user.id,
+            Subscription.active == True
+        )
+        ).all()
+
+        monthly_subscription_total = 0.0
+        for item in active_subscriptions:
+            if item.billing_cycle == "yearly":
+                monthly_subscription_total += item.amount / 12
+            else:
+             monthly_subscription_total += item.amount
+
+        total_spending = total_expenses + monthly_subscription_total
+        total_income = user.monthly_income
+        savings = total_income - total_spending
+
+        category_totals = {}
+        for item in monthly_expenses:
+             category_name = item.category.name if item.category else "Uncategorized"
+             category_totals[category_name] = category_totals.get(category_name, 0) + item.amount
+
+        top_category = "None"
+        if category_totals:
+            top_category = max(category_totals, key=category_totals.get)
+
+        return {
+            "month_label": month_label,
+            "month_key": month_key,
+            "total_income": total_income,
+            "total_spending": total_spending,
+            "savings": savings,
+            "top_category": top_category,
+            "monthly_expense_total": total_expenses,
+            "monthly_subscription_total": monthly_subscription_total,
         }

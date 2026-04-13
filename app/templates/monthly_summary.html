@@ -1,0 +1,61 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}Monthly Summary{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h4 class="card-title mb-4">{{ summary.month_label }} Summary</h4>
+
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <p class="text-muted mb-2">Total Income</p>
+                            <h4>${{ '%.2f'|format(summary.total_income) }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <p class="text-muted mb-2">Total Spending</p>
+                            <h4>${{ '%.2f'|format(summary.total_spending) }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <p class="text-muted mb-2">Savings</p>
+                            <h4 class="{% if summary.savings < 0 %}text-danger{% endif %}">
+                                ${{ '%.2f'|format(summary.savings) }}
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <p class="text-muted mb-2">Top Category</p>
+                            <h4>{{ summary.top_category }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Breakdown</h5>
+                    <p><strong>One-Time Expenses:</strong> ${{ '%.2f'|format(summary.monthly_expense_total) }}</p>
+                    <p class="mb-0"><strong>Subscriptions:</strong> ${{ '%.2f'|format(summary.monthly_subscription_total) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
