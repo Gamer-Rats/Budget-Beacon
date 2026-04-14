@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from app.dependencies.auth import AuthDep
@@ -33,7 +34,7 @@ def reports_view(request: Request, user: AuthDep, db: SessionDep):
             category_totals[category_name] = 0
         category_totals[category_name] += float(expense.amount)
 
-        month_key = expense.expense_date.strftime("%b %Y")
+        month_key = (expense.expense_date.year, expense.expense_date.month)
         if month_key not in monthly_totals:
             monthly_totals[month_key] = 0
         monthly_totals[month_key] += float(expense.amount)
@@ -65,9 +66,10 @@ def reports_view(request: Request, user: AuthDep, db: SessionDep):
         })
 
     monthly_spending_trend = []
-    for month, total in monthly_totals.items():
+    for month_tuple, total in sorted(monthly_totals.items(), key=lambda item: item[0]):
+        year, month = month_tuple
         monthly_spending_trend.append({
-            "month": month,
+            "month": date(year, month, 1).strftime("%b %Y"),
             "total": total,
         })
 
